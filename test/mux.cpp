@@ -75,11 +75,11 @@ static void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt)
 {
     AVRational *time_base = &fmt_ctx->streams[pkt->stream_index]->time_base;
 
-    // printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
-    //        av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
-    //        av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
-    //        av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
-    //        pkt->stream_index);
+    printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
+           av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
+           av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
+           av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
+           pkt->stream_index);
 }
 
 static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
@@ -87,11 +87,16 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
 {
     int ret;
 
+    if (frame) {
+        printf("frame: pts=%lld, time_base=%d %d\n", frame->pts, frame->time_base.num, frame->time_base.den);
+
+    }
+    
     // send the frame to the encoder
     ret = avcodec_send_frame(c, frame);
     if (ret < 0) {
-    //    fprintf(stderr, "Error sending a frame to the encoder: %s\n",
-    //            av_err2str(ret));
+        fprintf(stderr, "Error sending a frame to the encoder: %s\n",
+                av_err2str(ret));
         exit(1);
     }
 
@@ -100,13 +105,20 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             break;
         else if (ret < 0) {
-        //    fprintf(stderr, "Error encoding a frame: %s\n", av_err2str(ret));
+            fprintf(stderr, "Error encoding a frame: %s\n", av_err2str(ret));
             exit(1);
         }
+
+        printf("AVPacket: pts=%lld, dts=%lld time_base=%d %d\n", pkt->pts, pkt->dts, pkt->time_base.num, pkt->time_base.den);
+
 
         /* rescale output packet timestamp values from codec to stream timebase */
         av_packet_rescale_ts(pkt, c->time_base, st->time_base);
         pkt->stream_index = st->index;
+
+        printf("pkt: pts=%lld, dts=%lld time_base=%d %d\n", pkt->pts, pkt->dts, pkt->time_base.num, pkt->time_base.den);
+
+        printf("AVCodecContext=(%d %d), AVStream=(%d %d)\n", c->time_base.num, c->time_base.den, st->time_base.num, st->time_base.den);
 
         /* Write the compressed frame to the media file. */
         log_packet(fmt_ctx, pkt);
@@ -115,7 +127,7 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
          * its contents and resets pkt), so that no unreferencing is necessary.
          * This would be different if one used av_write_frame(). */
         if (ret < 0) {
-        //    fprintf(stderr, "Error while writing output packet: %s\n", av_err2str(ret));
+            fprintf(stderr, "Error while writing output packet: %s\n", av_err2str(ret));
             exit(1);
         }
     }
@@ -187,7 +199,7 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
          * timebase should be 1/framerate and timestamp increments should be
          * identical to 1. */
         ost->st->time_base = (AVRational){ 1, STREAM_FRAME_RATE };
-        c->time_base       = ost->st->time_base;
+        c->time_base       = (AVRational){ 1, STREAM_FRAME_RATE };//ost->st->time_base;
 
         c->gop_size      = 12; /* emit one intra frame every twelve frames at most */
         c->pix_fmt       = STREAM_PIX_FMT;
@@ -255,7 +267,7 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
     ret = avcodec_open2(c, codec, &opt);
     av_dict_free(&opt);
     if (ret < 0) {
-    //    fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
+        fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
         exit(1);
     }
 
@@ -417,7 +429,7 @@ static void open_video(AVFormatContext *oc, const AVCodec *codec,
     ret = avcodec_open2(c, codec, &opt);
     av_dict_free(&opt);
     if (ret < 0) {
-    //    fprintf(stderr, "Could not open video codec: %s\n", av_err2str(ret));
+        fprintf(stderr, "Could not open video codec: %s\n", av_err2str(ret));
         exit(1);
     }
 
@@ -602,8 +614,8 @@ int main(int argc, char **argv)
     if (!(fmt->flags & AVFMT_NOFILE)) {
         ret = avio_open(&oc->pb, filename, AVIO_FLAG_WRITE);
         if (ret < 0) {
-        //    fprintf(stderr, "Could not open '%s': %s\n", filename,
-        //            av_err2str(ret));
+            fprintf(stderr, "Could not open '%s': %s\n", filename,
+                    av_err2str(ret));
             return 1;
         }
     }
@@ -611,8 +623,8 @@ int main(int argc, char **argv)
     /* Write the stream header, if any. */
     ret = avformat_write_header(oc, &opt);
     if (ret < 0) {
-    //    fprintf(stderr, "Error occurred when opening output file: %s\n",
-    //            av_err2str(ret));
+        fprintf(stderr, "Error occurred when opening output file: %s\n",
+                av_err2str(ret));
         return 1;
     }
 

@@ -91,9 +91,9 @@ static int output_video_frame(AVFrame *frame)
 static int output_audio_frame(AVFrame *frame)
 {
     size_t unpadded_linesize = frame->nb_samples * av_get_bytes_per_sample(frame->format);
-    // printf("audio_frame n:%d nb_samples:%d pts:%s\n",
-    //        audio_frame_count++, frame->nb_samples,
-    //        av_ts2timestr(frame->pts, &audio_dec_ctx->time_base));
+    printf("audio_frame n:%d nb_samples:%d pts:%s\n",
+           audio_frame_count++, frame->nb_samples,
+           av_ts2timestr(frame->pts, &audio_dec_ctx->time_base));
 
     /* Write the raw audio data samples of the first plane. This works
      * fine for packed formats (e.g. AV_SAMPLE_FMT_S16). However,
@@ -115,7 +115,7 @@ static int decode_packet(AVCodecContext *dec, const AVPacket *pkt)
     // submit the packet to the decoder
     ret = avcodec_send_packet(dec, pkt);
     if (ret < 0) {
-    //    fprintf(stderr, "Error submitting a packet for decoding (%s)\n", av_err2str(ret));
+        fprintf(stderr, "Error submitting a packet for decoding (%s)\n", av_err2str(ret));
         return ret;
     }
 
@@ -128,7 +128,7 @@ static int decode_packet(AVCodecContext *dec, const AVPacket *pkt)
             if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN))
                 return 0;
 
-        //    fprintf(stderr, "Error during decoding (%s)\n", av_err2str(ret));
+            fprintf(stderr, "Error during decoding (%s)\n", av_err2str(ret));
             return ret;
         }
 

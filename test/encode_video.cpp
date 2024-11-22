@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     /* open it */
     ret = avcodec_open2(c, codec, NULL);
     if (ret < 0) {
-    //    fprintf(stderr, "Could not open codec: %s\n", av_err2str(ret));
+        fprintf(stderr, "Could not open codec: %s\n", av_err2str(ret));
         exit(1);
     }
 

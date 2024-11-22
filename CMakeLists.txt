@@ -15,6 +15,19 @@ add_definitions(-D__STDC_CONSTANT_MACROS)
 
 find_package (glog REQUIRED)
 
+find_package(OpenCV REQUIRED)
+if(NOT OpenCV_FOUND)
+	message("fail to find OpenCV")
+else()
+	include_directories(${OpenCV_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${OpenCV_LIBS})
+	message(STATUS "OpenCV library status:")
+	message(STATUS "    version: ${OpenCV_VERSION}")
+	message(STATUS "    include: ${OpenCV_INCLUDE_DIRS}")
+	message(STATUS "    library: ${OpenCV_INSTALL_PATH}")
+	message(STATUS "    libs: ${OpenCV_LIBS}")
+endif()
+
 include_directories(./)
 
 # 引入pkg-config模块

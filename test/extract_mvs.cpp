@@ -47,7 +47,7 @@ static int decode_packet(const AVPacket *pkt)
 {
     int ret = avcodec_send_packet(video_dec_ctx, pkt);
     if (ret < 0) {
-    //    fprintf(stderr, "Error while sending a packet to the decoder: %s\n", av_err2str(ret));
+        fprintf(stderr, "Error while sending a packet to the decoder: %s\n", av_err2str(ret));
         return ret;
     }
 
@@ -56,7 +56,7 @@ static int decode_packet(const AVPacket *pkt)
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;
         } else if (ret < 0) {
-        //    fprintf(stderr, "Error while receiving a frame from the decoder: %s\n", av_err2str(ret));
+            fprintf(stderr, "Error while receiving a frame from the decoder: %s\n", av_err2str(ret));
             return ret;
         }
 
