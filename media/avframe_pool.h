@@ -36,20 +36,31 @@ public:
 
 class AVFramePool
 {
-public:
-    AVFramePool(int init_num, int inc_num, int max_num) : pool_(init_num, inc_num, max_num, &allocator_) {}
+public: 
+    static AVFramePool* instance() {
+        static AVFramePool instance;
+        return &instance;
+    }
+
 
     AVFrame* get() {
         return pool_.get();
     }
 
     void put(AVFrame** p) {
+        av_frame_unref(*p);
         pool_.put(p);
     }
 
 protected:
     AVFrameAllocator allocator_;
     ObjectPool<AVFrame> pool_;
+
+private:
+    AVFramePool() : pool_(8, 4, 128, &allocator_) {}
+    ~AVFramePool() {}
+    AVFramePool(const AVFramePool&) = delete;
+    AVFramePool & operator = (const AVFramePool&) = delete;
 };
 
 

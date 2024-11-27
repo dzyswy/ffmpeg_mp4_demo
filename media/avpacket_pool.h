@@ -37,20 +37,31 @@ public:
 
 class AVPacketPool
 {
-public:
-    AVPacketPool(int init_num, int inc_num, int max_num) : pool_(init_num, inc_num, max_num, &allocator_) {}
+public: 
+    static AVPacketPool* instance() {
+        static AVPacketPool instance;
+        return &instance;
+    }
 
     AVPacket* get() {
         return pool_.get();
     }
 
     void put(AVPacket** p) {
+        av_packet_unref(*p);
         pool_.put(p);
     }
+
 
 protected:
     AVPacketAllocator allocator_;
     ObjectPool<AVPacket> pool_;
+
+private: 
+    AVPacketPool() : pool_(8, 4, 128, &allocator_) {}
+    ~AVPacketPool() {}
+    AVPacketPool(const AVPacketPool&) = delete;
+    AVPacketPool & operator = (const AVPacketPool&) = delete;
 };
 
 

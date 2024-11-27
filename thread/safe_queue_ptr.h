@@ -30,6 +30,12 @@ public:
         full_cond_.notify_all(); 
     }
 
+    bool is_quit() {
+        std::unique_lock<std::mutex> lock(mutex_);
+
+        return quit_;
+    }
+
     int push(T* data) {
 
         std::unique_lock<std::mutex> lock(mutex_);

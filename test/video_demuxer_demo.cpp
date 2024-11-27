@@ -1,4 +1,4 @@
-#include "media/mp4_decoder.h"
+#include "media/video_demuxer.h"
 
 
 using namespace duck::media;
@@ -6,6 +6,7 @@ using namespace duck::media;
 
 int main(int argc, char* argv[])
 {
+    int ret;
     google::InstallFailureSignalHandler();
     google::InitGoogleLogging(argv[0]);
 
@@ -14,25 +15,32 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    std::string mp4_name = argv[1];
+    std::string video_name = argv[1];
     FLAGS_stderrthreshold = atoi(argv[2]);
     FLAGS_minloglevel = 0;
 
-    Mp4Decoder mp4x;
-    mp4x.open_file(mp4_name, true);
+    VideoDemuxer xdemuxer;
+
+    ret = xdemuxer.open_file(video_name);
+    if (ret < 0) {
+        return -1;
+    }
+
 
     int frame_count = 0;
     while(1)
     {
-        AVFrame* frame = mp4x.queue_frame();
-        if (frame == nullptr) {
+        AVPacket* pkt = xdemuxer.queue_packet();
+        if (pkt == nullptr) {
             break;
         }
-        printf("%d, width=%d, height=%d, pts=%lld, pkt_dts=%lld\n", frame_count, frame->width, frame->height, frame->pts, frame->pkt_dts);
-        mp4x.dequeue_frame(&frame);
+
+        printf("%d, size=%d, pts=%lld, dts=%lld, duration=%lld\n", frame_count, pkt->size, pkt->pts, pkt->dts, pkt->duration);
+        
+        xdemuxer.dequeue_packet(&pkt);
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         frame_count++;
-        if (frame_count >= 102400) {
+        if (frame_count >= 1024) {
             break;
         }
     }
@@ -40,7 +48,7 @@ int main(int argc, char* argv[])
     std::cout << "wait key..." << std::endl;
     std::getchar(); 
 
-    mp4x.close_file();
+    xdemuxer.close_file();
  
 
     std::cout << "bye!" << std::endl;

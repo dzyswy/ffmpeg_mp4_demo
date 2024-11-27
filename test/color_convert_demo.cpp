@@ -1,7 +1,25 @@
-#include "media/mp4_decoder.h"
+#include <string>
+#include <iostream>
+#include <iomanip> 
+#include <map>
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <chrono>
+#include <functional>
+#include <glog/logging.h>
+#include <opencv2/opencv.hpp>
+
+extern "C" {
+    #include <libavutil/imgutils.h>
+    #include <libavutil/samplefmt.h>
+    #include <libavutil/timestamp.h>
+    #include <libavcodec/avcodec.h>
+    #include <libavformat/avformat.h>
+}
 
 
-using namespace duck::media;
+//using namespace duck::media;
 
 void test_yuv420p(cv::Mat img); 
 

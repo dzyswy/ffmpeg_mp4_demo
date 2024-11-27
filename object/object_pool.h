@@ -78,6 +78,12 @@ public:
         }
     }
 
+    size_t obj_num() {
+        std::unique_lock<std::mutex> lock(mutex_);
+
+        return obj_vec_.size();
+    }
+
 private:
     void alloc_block(int num) {
         std::unique_lock<std::mutex> lock(mutex_);
@@ -87,6 +93,8 @@ private:
             obj_vec_.push_back(p);
             free_list_.push_back(p);
         }
+
+        std::cout << "obj vec size: " << obj_vec_.size() << std::endl;
 
         if (obj_vec_.size() > max_num_) {
             std::cout << "object pool alloc too much object!" << std::endl;
