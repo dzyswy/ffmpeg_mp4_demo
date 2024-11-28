@@ -1,7 +1,15 @@
 #include "media/video_demuxer.h"
-#include "media/video_decoder.h"
+#include "media/video_decoder.h" 
+#include <libavutil/imgutils.h>
 
 using namespace duck::media;
+
+
+static uint8_t *video_dst_data[4] = {NULL};
+static int      video_dst_linesize[4];
+static int video_dst_bufsize = 0;
+
+
 
 
 int main(int argc, char* argv[])
@@ -10,14 +18,15 @@ int main(int argc, char* argv[])
     google::InstallFailureSignalHandler();
     google::InitGoogleLogging(argv[0]);
 
-    if (argc != 4) {
-        printf("usage: %s *.h264 h264/hevc (0:INFO, 1:WARNING, 2:ERROR, 3:FATAL)\n", argv[0]);
+    if (argc != 5) {
+        printf("usage: %s *.h264 h264/hevc *.yuv (0:INFO, 1:WARNING, 2:ERROR, 3:FATAL)\n", argv[0]);
         return -1;
     }
 
     std::string video_name = argv[1];
     std::string codec_name = argv[2];
-    FLAGS_stderrthreshold = atoi(argv[3]);
+    std::string out_name = argv[3];
+    FLAGS_stderrthreshold = atoi(argv[4]);
     FLAGS_minloglevel = 0;
 
     VideoDemuxer xdemuxer;
@@ -34,7 +43,12 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    
+    FILE *outfp = fopen(out_name.c_str(), "wb");
+    if (!outfp) {
+        return -1;
+    }
+
+ 
     int frame_count = 0;
     while(1)
     {
@@ -42,6 +56,24 @@ int main(int argc, char* argv[])
         if (frame == nullptr) {
             break;
         }
+
+        if (video_dst_bufsize == 0) {
+            video_dst_bufsize = av_image_alloc(video_dst_data, video_dst_linesize,
+                             frame->width, frame->height, AV_PIX_FMT_YUV420P, 1);
+            if (video_dst_bufsize < 0) {
+                printf("Failed to av_image_alloc!\n");
+                return -1;
+            }
+        }
+
+        /* copy decoded frame to destination buffer:
+        * this is required since rawvideo expects non aligned data */
+        av_image_copy(video_dst_data, video_dst_linesize,
+                    (const uint8_t **)(frame->data), frame->linesize,
+                    AV_PIX_FMT_YUV420P, frame->width, frame->height);
+
+        /* write to rawvideo file */
+        fwrite(video_dst_data[0], 1, video_dst_bufsize, outfp);
 
         cv::Mat img = cv::Mat(frame->height, frame->width, CV_8U, frame->data[0]);
         cv::imshow("img", img);
@@ -58,6 +90,7 @@ int main(int argc, char* argv[])
         }
     }
 
+    fclose(outfp);
     cv::destroyAllWindows();
 
     std::cout << "wait key..." << std::endl;

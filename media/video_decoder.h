@@ -92,22 +92,22 @@ public:
         int ret;
 
         AVFrame *frame = AVFramePool::instance()->get();
-        while(true)
+        while(!frame_queue_.is_quit())
         {
-            if (frame_queue_.is_quit()) {
-                break;
-            }
-
             AVPacket *pkt = pkt_queue_->pop();
             if (pkt == nullptr) {
-                frame_queue_.push(nullptr); //flush
                 break;
             }
 
-            decode_packet(pkt, &frame);
-
+            ret = decode_packet(pkt, &frame);
             AVPacketPool::instance()->put(&pkt);
+            if (ret < 0) {
+                break;
+            }
+
+
         }
+        frame_queue_.push(nullptr); //flush
     }
 
     int decode_packet(const AVPacket *pkt, AVFrame** frame) {
@@ -117,8 +117,8 @@ public:
         // submit the packet to the decoder
         ret = avcodec_send_packet(dec_ctx_, pkt);
         if (ret < 0) {
-            LOG(INFO) << "Error submitting a packet for decoding: " << std::string(av_err2str(ret));
-            return ret;
+            LOG(ERROR) << "Error submitting a packet for decoding: " << std::string(av_err2str(ret));
+            return -1;
         }
 
         while(1)
@@ -132,23 +132,18 @@ public:
                     break;
 
                 LOG(INFO) << "Error during decoding " << std::string(av_err2str(ret));
-                return ret;
+                return -1;
             } else {
                 ret = frame_queue_.push(*frame); 
                 if (ret < 0) {
                     return -1;
+                } else {
+                    *frame = AVFramePool::instance()->get();
                 }
-                *frame = AVFramePool::instance()->get();
             }
-            
         }
 
-
         return 0;
-    }
-
-    void subscribe_pkt_queue(SafeQueuePtr<AVPacket>* pkt_queue) {
-        pkt_queue_ = pkt_queue;
     }
 
     AVFrame* queue_frame() {
@@ -159,6 +154,14 @@ public:
 
     void dequeue_frame(AVFrame** frame) { 
         AVFramePool::instance()->put(frame);
+    }
+
+    void subscribe_pkt_queue(SafeQueuePtr<AVPacket>* pkt_queue) {
+        pkt_queue_ = pkt_queue;
+    }
+
+    SafeQueuePtr<AVFrame>* frame_queue() {
+        return &frame_queue_;
     }
 
 protected:
