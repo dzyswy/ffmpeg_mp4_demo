@@ -42,15 +42,23 @@ int main(int argc, char* argv[])
         if (frame == nullptr) {
             break;
         }
+
+        cv::Mat img = cv::Mat(frame->height, frame->width, CV_8U, frame->data[0]);
+        cv::imshow("img", img);
+
+        cv::waitKey(10);
+
         printf("%d, width=%d, height=%d, pts=%lld, pkt_dts=%lld\n", frame_count, frame->width, frame->height, frame->pts, frame->pkt_dts);
         xdecoder.dequeue_frame(&frame);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(25));
         frame_count++;
         if (frame_count >= 1024) {
             break;
         }
     }
+
+    cv::destroyAllWindows();
 
     std::cout << "wait key..." << std::endl;
     std::getchar(); 
