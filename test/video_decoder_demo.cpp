@@ -1,6 +1,5 @@
 #include "media/video_demuxer.h"
-#include "media/video_decoder.h" 
-#include <libavutil/imgutils.h>
+#include "media/video_decoder.h"  
 
 using namespace duck::media;
 
@@ -89,6 +88,8 @@ int main(int argc, char* argv[])
             break;
         }
     }
+
+    xdecoder.debug();
 
     fclose(outfp);
     cv::destroyAllWindows();

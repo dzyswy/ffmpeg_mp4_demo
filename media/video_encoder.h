@@ -74,12 +74,13 @@ public:
         * will always be I frame irrespective to gop_size
         */
         enc_ctx_->gop_size = 10;
-        enc_ctx_->max_b_frames = 1;
+        enc_ctx_->max_b_frames = 0;
         enc_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
 
         if (codec->id == AV_CODEC_ID_H264)
             av_opt_set(enc_ctx_->priv_data, "preset", "slow", 0);
 
+        //enc_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
         //Init the decoders
         ret = avcodec_open2(enc_ctx_, codec, NULL);
@@ -87,6 +88,8 @@ public:
             LOG(ERROR) << "Failed to open video codec: " << std::string(av_err2str(ret));
             return -1;
         }
+
+        
 
         start();
 
@@ -96,6 +99,74 @@ public:
     void close_encoder() {
         stop();
         avcodec_free_context(&enc_ctx_);
+    }
+
+    void debug() {
+        //debug
+        AVCodecParameters *codecpar = avcodec_parameters_alloc();
+        LOG(INFO) << "codec_type: \t" << (int)codecpar->codec_type;
+        LOG(INFO) << "codec_id: \t" << (int)codecpar->codec_id;
+        LOG(INFO) << "codec_tag: \t" << codecpar->codec_tag;
+        LOG(INFO) << "extradata_size: \t" << (int)codecpar->extradata_size;
+        LOG(INFO) << "format: \t" << (int)codecpar->format;
+        LOG(INFO) << "bit_rate: \t" << codecpar->bit_rate;
+        LOG(INFO) << "bits_per_coded_sample: \t" << (int)codecpar->bits_per_coded_sample;
+        LOG(INFO) << "bits_per_raw_sample: \t" << (int)codecpar->bits_per_raw_sample;
+        LOG(INFO) << "profile: \t" << (int)codecpar->profile;
+        LOG(INFO) << "level: \t" << (int)codecpar->level;
+        LOG(INFO) << "width: \t" << (int)codecpar->width;
+        LOG(INFO) << "height: \t" << (int)codecpar->height;
+
+
+        LOG(INFO) << "sample_aspect_ratio: \t" << (int)codecpar->sample_aspect_ratio.num << ", " << codecpar->sample_aspect_ratio.den ;
+        LOG(INFO) << "field_order: \t" << (int)codecpar->field_order;
+        LOG(INFO) << "color_range: \t" << (int)codecpar->color_range;
+        LOG(INFO) << "color_primaries: \t" << (int)codecpar->color_primaries;
+        LOG(INFO) << "color_trc: \t" << (int)codecpar->color_trc;
+        LOG(INFO) << "color_space: \t" << (int)codecpar->color_space;
+        LOG(INFO) << "chroma_location: \t" << (int)codecpar->chroma_location;
+        LOG(INFO) << "video_delay: \t" << (int)codecpar->video_delay;
+        int ret = avcodec_parameters_from_context(codecpar, enc_ctx_);
+        if (ret < 0) {
+            LOG(ERROR) << "Failed to avcodec_parameters_from_context";
+            return;
+        }
+        LOG(INFO) << "\n\n";
+
+        LOG(INFO) << "codec_type: \t" << (int)codecpar->codec_type;
+        LOG(INFO) << "codec_id: \t" << (int)codecpar->codec_id;
+        LOG(INFO) << "codec_tag: \t" << codecpar->codec_tag;
+        LOG(INFO) << "extradata_size: \t" << (int)codecpar->extradata_size;
+        LOG(INFO) << "format: \t" << (int)codecpar->format;
+        LOG(INFO) << "bit_rate: \t" << codecpar->bit_rate;
+        LOG(INFO) << "bits_per_coded_sample: \t" << (int)codecpar->bits_per_coded_sample;
+        LOG(INFO) << "bits_per_raw_sample: \t" << (int)codecpar->bits_per_raw_sample;
+        LOG(INFO) << "profile: \t" << (int)codecpar->profile;
+        LOG(INFO) << "level: \t" << (int)codecpar->level;
+        LOG(INFO) << "width: \t" << (int)codecpar->width;
+        LOG(INFO) << "height: \t" << (int)codecpar->height;
+
+
+        LOG(INFO) << "sample_aspect_ratio: \t" << (int)codecpar->sample_aspect_ratio.num << ", " << codecpar->sample_aspect_ratio.den ;
+        LOG(INFO) << "field_order: \t" << (int)codecpar->field_order;
+        LOG(INFO) << "color_range: \t" << (int)codecpar->color_range;
+        LOG(INFO) << "color_primaries: \t" << (int)codecpar->color_primaries;
+        LOG(INFO) << "color_trc: \t" << (int)codecpar->color_trc;
+        LOG(INFO) << "color_space: \t" << (int)codecpar->color_space;
+        LOG(INFO) << "chroma_location: \t" << (int)codecpar->chroma_location;
+        LOG(INFO) << "video_delay: \t" << (int)codecpar->video_delay;
+
+        for (int i = 0; i < codecpar->extradata_size; i++) {
+            printf("%02x ", codecpar->extradata[i]);
+            if ((i % 16) == 15) {
+                printf("\n");
+            }
+        }
+        printf("\n");
+
+
+        avcodec_parameters_free(&codecpar);
+        //debug
     }
 
     void start() override {
@@ -129,6 +200,7 @@ public:
         }
         pkt_queue_.push(nullptr);//flush
     }
+
 
     int encode_frame(AVFrame *frame, AVPacket** pkt) {
 

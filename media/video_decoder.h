@@ -76,6 +76,66 @@ public:
         avcodec_free_context(&dec_ctx_); 
     }
 
+    void debug() {
+        //debug
+        AVCodecParameters *codecpar = avcodec_parameters_alloc();
+        LOG(INFO) << "codec_type: \t" << (int)codecpar->codec_type;
+        LOG(INFO) << "codec_id: \t" << (int)codecpar->codec_id;
+        LOG(INFO) << "codec_tag: \t" << codecpar->codec_tag;
+        LOG(INFO) << "extradata_size: \t" << (int)codecpar->extradata_size;
+        LOG(INFO) << "format: \t" << (int)codecpar->format;
+        LOG(INFO) << "bit_rate: \t" << codecpar->bit_rate;
+        LOG(INFO) << "bits_per_coded_sample: \t" << (int)codecpar->bits_per_coded_sample;
+        LOG(INFO) << "bits_per_raw_sample: \t" << (int)codecpar->bits_per_raw_sample;
+        LOG(INFO) << "profile: \t" << (int)codecpar->profile;
+        LOG(INFO) << "level: \t" << (int)codecpar->level;
+        LOG(INFO) << "width: \t" << (int)codecpar->width;
+        LOG(INFO) << "height: \t" << (int)codecpar->height;
+
+
+        LOG(INFO) << "sample_aspect_ratio: \t" << (int)codecpar->sample_aspect_ratio.num << ", " << codecpar->sample_aspect_ratio.den ;
+        LOG(INFO) << "field_order: \t" << (int)codecpar->field_order;
+        LOG(INFO) << "color_range: \t" << (int)codecpar->color_range;
+        LOG(INFO) << "color_primaries: \t" << (int)codecpar->color_primaries;
+        LOG(INFO) << "color_trc: \t" << (int)codecpar->color_trc;
+        LOG(INFO) << "color_space: \t" << (int)codecpar->color_space;
+        LOG(INFO) << "chroma_location: \t" << (int)codecpar->chroma_location;
+        LOG(INFO) << "video_delay: \t" << (int)codecpar->video_delay;
+        int ret = avcodec_parameters_from_context(codecpar, dec_ctx_);
+        if (ret < 0) {
+            LOG(ERROR) << "Failed to avcodec_parameters_from_context";
+            return;
+        }
+        LOG(INFO) << "\n\n";
+
+        LOG(INFO) << "codec_type: \t" << (int)codecpar->codec_type;
+        LOG(INFO) << "codec_id: \t" << (int)codecpar->codec_id;
+        LOG(INFO) << "codec_tag: \t" << codecpar->codec_tag;
+        LOG(INFO) << "extradata_size: \t" << (int)codecpar->extradata_size;
+        LOG(INFO) << "format: \t" << (int)codecpar->format;
+        LOG(INFO) << "bit_rate: \t" << codecpar->bit_rate;
+        LOG(INFO) << "bits_per_coded_sample: \t" << (int)codecpar->bits_per_coded_sample;
+        LOG(INFO) << "bits_per_raw_sample: \t" << (int)codecpar->bits_per_raw_sample;
+        LOG(INFO) << "profile: \t" << (int)codecpar->profile;
+        LOG(INFO) << "level: \t" << (int)codecpar->level;
+        LOG(INFO) << "width: \t" << (int)codecpar->width;
+        LOG(INFO) << "height: \t" << (int)codecpar->height;
+
+
+        LOG(INFO) << "sample_aspect_ratio: \t" << (int)codecpar->sample_aspect_ratio.num << ", " << codecpar->sample_aspect_ratio.den ;
+        LOG(INFO) << "field_order: \t" << (int)codecpar->field_order;
+        LOG(INFO) << "color_range: \t" << (int)codecpar->color_range;
+        LOG(INFO) << "color_primaries: \t" << (int)codecpar->color_primaries;
+        LOG(INFO) << "color_trc: \t" << (int)codecpar->color_trc;
+        LOG(INFO) << "color_space: \t" << (int)codecpar->color_space;
+        LOG(INFO) << "chroma_location: \t" << (int)codecpar->chroma_location;
+        LOG(INFO) << "video_delay: \t" << (int)codecpar->video_delay;
+
+
+        avcodec_parameters_free(&codecpar);
+        //debug
+    }
+
     void start() override {
 
         Thread::start();

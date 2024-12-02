@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <glog/logging.h>
 
 extern "C" {
     #include <libavutil/avassert.h>
@@ -458,6 +459,40 @@ static void open_video(AVFormatContext *oc, const AVCodec *codec,
         fprintf(stderr, "Could not copy the stream parameters\n");
         exit(1);
     }
+
+    //debug
+    AVCodecParameters *codecpar = ost->st->codecpar;
+    LOG(INFO) << "codec_type: \t" << (int)codecpar->codec_type;
+    LOG(INFO) << "codec_id: \t" << (int)codecpar->codec_id;
+    LOG(INFO) << "codec_tag: \t" << codecpar->codec_tag;
+    LOG(INFO) << "extradata_size: \t" << (int)codecpar->extradata_size;
+    LOG(INFO) << "format: \t" << (int)codecpar->format;
+    LOG(INFO) << "bit_rate: \t" << codecpar->bit_rate;
+    LOG(INFO) << "bits_per_coded_sample: \t" << (int)codecpar->bits_per_coded_sample;
+    LOG(INFO) << "bits_per_raw_sample: \t" << (int)codecpar->bits_per_raw_sample;
+    LOG(INFO) << "profile: \t" << (int)codecpar->profile;
+    LOG(INFO) << "level: \t" << (int)codecpar->level;
+    LOG(INFO) << "width: \t" << (int)codecpar->width;
+    LOG(INFO) << "height: \t" << (int)codecpar->height;
+
+
+    LOG(INFO) << "sample_aspect_ratio: \t" << (int)codecpar->sample_aspect_ratio.num << ", " << codecpar->sample_aspect_ratio.den ;
+    LOG(INFO) << "field_order: \t" << (int)codecpar->field_order;
+    LOG(INFO) << "color_range: \t" << (int)codecpar->color_range;
+    LOG(INFO) << "color_primaries: \t" << (int)codecpar->color_primaries;
+    LOG(INFO) << "color_trc: \t" << (int)codecpar->color_trc;
+    LOG(INFO) << "color_space: \t" << (int)codecpar->color_space;
+    LOG(INFO) << "chroma_location: \t" << (int)codecpar->chroma_location;
+    LOG(INFO) << "video_delay: \t" << (int)codecpar->video_delay;
+
+    for (int i = 0; i < codecpar->extradata_size; i++) {
+        printf("%02x ", codecpar->extradata[i]);
+        if ((i % 16) == 15) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+    //debug
 }
 
 /* Prepare a dummy image. */
@@ -585,12 +620,12 @@ int main(int argc, char **argv)
     if (!oc)
         return 1;
 
-    fmt = oc->oformat;
+    fmt = oc->oformat; 
 
     /* Add the audio and video streams using the default format codecs
      * and initialize the codecs. */
     if (fmt->video_codec != AV_CODEC_ID_NONE) {
-        add_stream(&video_st, oc, &video_codec, fmt->video_codec);
+        add_stream(&video_st, oc, &video_codec, AV_CODEC_ID_H265);//fmt->video_codec
         have_video = 1;
         encode_video = 1;
     }

@@ -35,7 +35,7 @@ class VideoDemuxer : public Thread
 {
 public:
     VideoDemuxer() 
-        : Thread("VideoDemuxer"), fmt_ctx_(nullptr), bsf_ctx_(nullptr), pkt_queue_(8, "avfrm_queue") {}
+        : Thread("VideoDemuxer"), fmt_ctx_(nullptr), bsf_ctx_(nullptr), pkt_queue_(8, "avfrm_queue"), frame_count_(0) {}
 
     ~VideoDemuxer() {
         close_file();
@@ -44,6 +44,8 @@ public:
     int open_file(const std::string& file_name) {
 
         int ret; 
+        const AVCodec *dec = NULL;
+        const AVBitStreamFilter *bsfilter = NULL;
   
         //open input file, and allocate format context
         ret = avformat_open_input(&fmt_ctx_, file_name.c_str(), NULL, NULL);
@@ -66,8 +68,17 @@ public:
         }
 
         video_stream_idx_ = ret; 
+        AVStream *st = fmt_ctx_->streams[video_stream_idx_];
+
+        /* find decoder for the stream */
+        dec = avcodec_find_decoder(st->codecpar->codec_id);
+        if (!dec) { 
+            LOG(ERROR) << "Failed to find video codec";
+            return -1;
+        }
 
         av_dump_format(fmt_ctx_, 0, file_name.c_str(), 0);
+
 
         if (file_name.find(".mp4") != std::string::npos) {
 
@@ -77,8 +88,15 @@ public:
             * 流媒体传输使用annexb格式，annexb的NALU前面是起始码，有的是4字节的00 00 00 01，有的是3字节的00 00 01。
             * 可以使用过滤器将avcc的码流格式转换为annexb。
             * 
-            */
-            const AVBitStreamFilter *bsfilter = av_bsf_get_by_name("h264_mp4toannexb");
+            */ 
+            if (dec->id == AV_CODEC_ID_H265) {
+                bsfilter = av_bsf_get_by_name("hevc_mp4toannexb");
+            }
+            else {
+                bsfilter = av_bsf_get_by_name("h264_mp4toannexb");
+            }
+ 
+            
             av_bsf_alloc(bsfilter, &bsf_ctx_);
             //添加解码器属性
             avcodec_parameters_copy(bsf_ctx_->par_in, fmt_ctx_->streams[video_stream_idx_]->codecpar);
@@ -107,10 +125,47 @@ public:
         join();
     }
 
+    void debug() {
+        //debug
+        AVCodecParameters *codecpar = fmt_ctx_->streams[video_stream_idx_]->codecpar;
+        LOG(INFO) << "codec_type: \t" << (int)codecpar->codec_type;
+        LOG(INFO) << "codec_id: \t" << (int)codecpar->codec_id;
+        LOG(INFO) << "codec_tag: \t" << codecpar->codec_tag;
+        LOG(INFO) << "extradata_size: \t" << (int)codecpar->extradata_size;
+        LOG(INFO) << "format: \t" << (int)codecpar->format;
+        LOG(INFO) << "bit_rate: \t" << codecpar->bit_rate;
+        LOG(INFO) << "bits_per_coded_sample: \t" << (int)codecpar->bits_per_coded_sample;
+        LOG(INFO) << "bits_per_raw_sample: \t" << (int)codecpar->bits_per_raw_sample;
+        LOG(INFO) << "profile: \t" << (int)codecpar->profile;
+        LOG(INFO) << "level: \t" << (int)codecpar->level;
+        LOG(INFO) << "width: \t" << (int)codecpar->width;
+        LOG(INFO) << "height: \t" << (int)codecpar->height;
+
+
+        LOG(INFO) << "sample_aspect_ratio: \t" << (int)codecpar->sample_aspect_ratio.num << ", " << codecpar->sample_aspect_ratio.den ;
+        LOG(INFO) << "field_order: \t" << (int)codecpar->field_order;
+        LOG(INFO) << "color_range: \t" << (int)codecpar->color_range;
+        LOG(INFO) << "color_primaries: \t" << (int)codecpar->color_primaries;
+        LOG(INFO) << "color_trc: \t" << (int)codecpar->color_trc;
+        LOG(INFO) << "color_space: \t" << (int)codecpar->color_space;
+        LOG(INFO) << "chroma_location: \t" << (int)codecpar->chroma_location;
+        LOG(INFO) << "video_delay: \t" << (int)codecpar->video_delay;
+
+        for (int i = 0; i < codecpar->extradata_size; i++) {
+            printf("%02x ", codecpar->extradata[i]);
+            if ((i % 16) == 15) {
+                printf("\n");
+            }
+        }
+        printf("\n");
+        //debug
+    }
+
     void process() override {
 
         int ret;
         AVPacket* pkt = AVPacketPool::instance()->get();
+        frame_count_ = 0;
         while(!pkt_queue_.is_quit())
         {
 
@@ -127,6 +182,12 @@ public:
                             break;
                         }
                     } else {
+                        if (pkt->pts == AV_NOPTS_VALUE) {
+                            pkt->pts = frame_count_;
+                            pkt->dts = frame_count_;
+                            pkt->duration = 0;
+                        }
+
                         ret = pkt_queue_.push(pkt);
                         if (ret < 0) {
                             break;
@@ -135,6 +196,7 @@ public:
                         }
                         
                     }
+                    frame_count_++;
                 }
                 
             }
@@ -198,7 +260,7 @@ protected:
     AVBSFContext *bsf_ctx_;
     SafeQueuePtr<AVPacket> pkt_queue_;
     int video_stream_idx_;
-
+    int64_t frame_count_;
     
 };
 
