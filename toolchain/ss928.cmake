@@ -1,10 +1,3 @@
-# ffmpeg_mp4_demo
-ffmpeg mp4 demo
-
-
-
-### ss928.cmake
-```
 # set cross-compiled system type, it's better not use the type which cmake cannot recognized.
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
@@ -43,17 +36,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 # cache flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "c flags")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "c++ flags")
-
-
-```
-
-### 交叉编译
-```
-mkdir build_ss928
-cd build_ss928
-cmake -DCMAKE_INSTALL_PREFIX=/home/wy/tftpboot/ffmpeg_mp4_demo -DCMAKE_TOOLCHAIN_FILE=../toolchain/ss928.cmake ..
-```
-
-
-
 

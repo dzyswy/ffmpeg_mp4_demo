@@ -10,7 +10,7 @@
     // 配置 clangd 启动参数
     "clangd.arguments": [
         "--background-index",        // 启用后台索引
-        "--compile-commands-dir=${workspaceFolder}/build",  // 设置编译命令文件夹
+        "--compile-commands-dir=${workspaceFolder}/build_ss928",  // 设置编译命令文件夹
         "--all-scopes-completion",   // 允许在所有作用域中进行代码补全
         "--completion-style=detailed",  // 详细模式的代码补全
         "--clang-tidy",              // 启用 Clang-Tidy 静态代码分析
@@ -19,7 +19,7 @@
     ],
 
     // 配置 CMake 构建目录
-    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.buildDirectory": "${workspaceFolder}/build_ss928",
 
     // 配置 CMake 构建环境变量，使其生成编译命令数据库
     "cmake.buildEnvironment": {

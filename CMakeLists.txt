@@ -6,9 +6,13 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
-set(ENV{LD_LIBRARY_PATH} "/home/wy/src/ffmpeg/out/lib:$ENV{LD_LIBRARY_PATH}")
-set(ENV{PKG_CONFIG_PATH} "/home/wy/src/ffmpeg/out/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+#set(ENV{LD_LIBRARY_PATH} "/home/wy/src/ffmpeg/out/lib:$ENV{LD_LIBRARY_PATH}")
+#set(ENV{PKG_CONFIG_PATH} "/home/wy/src/ffmpeg/out/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 
+ 
+
+message(STATUS "glog_DIR: ${glog_DIR}")
+message(STATUS "OpenCV_DIR: ${OpenCV_DIR}")
 
 add_compile_options(-fpermissive)
 add_definitions(-D__STDC_CONSTANT_MACROS)
